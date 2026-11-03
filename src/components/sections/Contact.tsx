@@ -10,7 +10,11 @@ const iconLink =
 export function Contact() {
   return (
     <section id="contact" aria-labelledby="contact-title" className="container-site pb-24 pt-32 sm:pb-32 sm:pt-44 lg:pt-56">
-      <h2 id="contact-title" className="text-display-xl font-black uppercase text-balance">
+      <h2
+        id="contact-title"
+        // Slightly smaller than the hero: "SOMETHING." must fit a 360px screen.
+        className="text-[clamp(2.5rem,11vw,10.5rem)] font-black uppercase leading-[0.86] tracking-[-0.045em] text-balance"
+      >
         Let&rsquo;s build something.
       </h2>
 
