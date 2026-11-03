@@ -10,7 +10,7 @@ export type CrewMember = {
 };
 
 export const crewIntro = {
-  heading: "I don't work alone.",
+  heading: "I don’t work alone.",
   sub: "They make me look like a genius. I write the prompts.",
 };
 
