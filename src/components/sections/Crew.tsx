@@ -58,7 +58,7 @@ export function Crew() {
       </h2>
       <p className="mt-5 max-w-[42ch] text-title font-semibold text-text-muted">{crewIntro.sub}</p>
 
-      <ul className="mt-16 grid gap-6 md:mt-24 md:grid-cols-3 md:items-end md:gap-5">
+      <ul className="mt-16 grid gap-6 md:mt-24 md:grid-cols-3 md:gap-5">
         {crew.map((m) => (
           <CrewCard key={m.id} member={m} />
         ))}
