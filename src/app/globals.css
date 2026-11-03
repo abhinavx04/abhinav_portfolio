@@ -1,26 +1,182 @@
 @import "tailwindcss";
 
+/* ── Design tokens (see DESIGN.md) ─────────────────────────────────────────── */
+@theme {
+  --color-bg: #0b0b0f;
+  --color-surface: #16161c;
+  --color-border: #26262e;
+  --color-text: #ededed;
+  --color-text-muted: #9a9aa5;
+  --color-orange: #d97757;
+  --color-orange-light: #f0a07a;
+  --color-purple: #8b5cf6;
+  --color-bridge: #c2577a;
+  --color-on-orange: #1a1a1a;
+  --color-success: #22c55e;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-ui: 4px;
+
+  --ease-settle: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Fluid type scale: size, leading and tracking set per step. */
+  --text-display-xl: clamp(3.5rem, 13vw, 10.5rem);
+  --text-display-xl--line-height: 0.86;
+  --text-display-xl--letter-spacing: -0.045em;
+  --text-display: clamp(2.5rem, 7vw, 5.5rem);
+  --text-display--line-height: 0.92;
+  --text-display--letter-spacing: -0.035em;
+  --text-title: clamp(1.375rem, 2.4vw, 1.75rem);
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.015em;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.55;
+  --text-ui: 0.875rem;
+  --text-ui--line-height: 1.3;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Navbar geometry, shared by the header and the hero's reserved space (CLS 0). */
+  --bar-h: 3.5rem;
+  --skirt-h: 6rem;
+  --gutter: 1rem;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (min-width: 640px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bar-h: 4rem;
+    --gutter: 1.5rem;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 3rem;
+  }
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-padding-top: calc(var(--bar-h) + 1.5rem);
+  }
+
+  body {
+    min-height: 100dvh;
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  ::selection {
+    background: var(--color-orange);
+    color: var(--color-on-orange);
+  }
+
+  /* One focus style for the whole site: solid purple ring, offset from the element. */
+  :focus-visible {
+    outline: 2px solid var(--color-purple);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* On orange surfaces purple has no contrast, so the ring flips to dark ink. */
+  .on-orange :focus-visible {
+    outline-color: var(--color-on-orange);
+  }
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────────── */
+@utility container-site {
+  width: 100%;
+  max-width: calc(75rem + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Press feedback on pointer-down (apple-design §1). */
+@utility press {
+  transition: transform 100ms var(--ease-settle);
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+/* ── Navbar ────────────────────────────────────────────────────────────────── */
+/* Hover: a dark ink underline wipes in from the left. Active: solid purple (owner spec, Q1). */
+.nav-link::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.25rem;
+  height: 2px;
+  background: var(--color-on-orange);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms var(--ease-settle);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
+.nav-link[aria-current]::after {
+  background: var(--color-purple);
+  transform: scaleX(1);
+}
+
+/* Mobile menu: drops in from the bar and leaves the same way (apple-design §7). */
+.mobile-menu {
+  opacity: 0;
+  translate: 0 -0.75rem;
+  transition:
+    opacity 320ms var(--ease-settle),
+    translate 320ms var(--ease-settle),
+    overlay 320ms allow-discrete,
+    display 320ms allow-discrete;
+}
+.mobile-menu[open] {
+  opacity: 1;
+  translate: 0 0;
+}
+@starting-style {
+  .mobile-menu[open] {
+    opacity: 0;
+    translate: 0 -0.75rem;
+  }
+}
+.mobile-menu::backdrop {
+  background: transparent;
+}
+html:has(.mobile-menu[open]) {
+  overflow: hidden;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-border: #9a9aa5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 150ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
