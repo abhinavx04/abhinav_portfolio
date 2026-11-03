@@ -14,7 +14,7 @@ export function Navbar() {
         <div className="container-site flex h-[var(--bar-h)] items-center justify-between gap-6">
           <Link
             href="/"
-            className="press text-[1.0625rem] font-black uppercase leading-none tracking-[-0.02em] sm:text-lg"
+            className="press -my-2 inline-block py-3 text-[1.0625rem] font-black uppercase leading-none tracking-[-0.02em] sm:text-lg"
           >
             {site.shortName}
             <span className="sr-only">, home</span>
