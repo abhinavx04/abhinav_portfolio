@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { inter } from "./fonts";
 import { Navbar } from "@/components/nav/Navbar";
+import { Footer } from "@/components/Footer";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" tabIndex={-1} className="outline-none">
           {children}
         </main>
+        <Footer />
       </body>
     </html>
   );
