@@ -14,6 +14,7 @@ export type Project = {
   role?: string;
   stack: string[];
   result: string;
+  metric?: { label: string; from: string; to: string }; // a verified before/after number
   statusNote: string;
   links?: { label: string; href: string }[];
 };
@@ -64,7 +65,7 @@ export const projects: Project[] = [
     stack: ["Claude", "Claude Code", "Gemini", "Excel", "Google Sheets", "LinkedIn Recruiter"],
     result:
       "Some of these workflows work today; others are still experiments. I describe them here at a high level only.",
-    statusNote: "Ongoing at Plivo. A mix of working workflows and experiments.",
+    statusNote: "Ongoing at Plivo.",
   },
   {
     slug: "application-replatform",
@@ -83,6 +84,7 @@ export const projects: Project[] = [
     ],
     stack: ["React 19", "TypeScript", "Vite", "Tailwind CSS", "Firebase"],
     result: "Lighthouse performance score went from 81 to 96.",
+    metric: { label: "Lighthouse performance", from: "81", to: "96" },
     statusNote: "Internship project at Plustech Systems & Solutions.",
     // TODO [VERIFY]: my exact role on this project, if you want a "My role" section.
   },
