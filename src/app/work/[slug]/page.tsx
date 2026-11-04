@@ -15,11 +15,16 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/work/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const project = getProject(slug);
-  if (!project) return {};
+  if (!project) return { title: "Page not found" };
   return {
     title: project.title,
     description: project.outcome,
-    openGraph: { title: project.title, description: project.outcome },
+    // openGraph is replaced, not merged, per page: repeat the image or the page loses it.
+    openGraph: {
+      title: project.title,
+      description: project.outcome,
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: project.title }],
+    },
   };
 }
 
@@ -60,9 +65,12 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
     <article className="container-site pb-24 pt-[calc(var(--bar-h)+var(--skirt-h)+2rem)] sm:pb-32">
       <Link
         href="/#work"
-        className="press -ml-1 inline-flex items-center gap-2 py-2 pl-1 pr-2 text-ui font-semibold text-text-muted transition-colors duration-200 hover:text-text"
+        className="group press -ml-1 inline-flex items-center gap-2 py-2 pl-1 pr-2 text-ui font-semibold text-text-muted transition-colors duration-200 hover:text-text"
       >
-        <ArrowLeft aria-hidden="true" className="size-4" />
+        <ArrowLeft
+          aria-hidden="true"
+          className="size-4 transition-transform duration-200 ease-[var(--ease-settle)] group-hover:-translate-x-1"
+        />
         All work
       </Link>
 
