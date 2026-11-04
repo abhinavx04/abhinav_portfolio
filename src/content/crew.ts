@@ -21,20 +21,20 @@ export const crew: CrewMember[] = [
     label: "Claude Code",
     role: "The Thinker",
     line: "Analysis, planning and reasoning through structure.",
-    alt: "The Thinker: a cream retro TV robot with an orange screen face and a small smile.",
+    alt: "The Thinker: a cream retro TV robot with an orange screen face, frowning in thought inside a ring of glowing orange screens.",
   },
   {
     id: "director",
     label: "Me",
     role: "The Director",
     line: "Understands the problem, designs the workflow and makes the calls.",
-    alt: "The Director: Abhinav as a vinyl toy in a black hoodie and white sneakers, holding a glass of chai.",
+    alt: "The Director: Abhinav as a vinyl toy in a black hoodie and white sneakers, standing in the smoke of an open blast door.",
   },
   {
     id: "speedster",
     label: "Codex",
     role: "The Speedster",
     line: "Fast builds, rapid prototypes, shipping.",
-    alt: "The Speedster: a violet juice box with big round eyes and a striped bendy straw.",
+    alt: "The Speedster: a violet juice box with a striped straw, typing on several keyboards at once in front of a wall of green screens.",
   },
 ];

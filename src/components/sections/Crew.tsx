@@ -31,21 +31,27 @@ function CrewCard({ member }: { member: CrewMember }) {
       className={`flex flex-col rounded-ui border border-border bg-surface ${lead ? "order-first md:order-none md:-mt-10" : ""}`}
     >
       {/* Fixed aspect box: reserves space so the image can't shift layout. */}
-      <div className="relative mx-auto aspect-[4/5] w-full max-w-[17rem] px-6 pt-8">
-        {hasArt(member.id) ? (
-          <Image
-            src={`/crew/${member.id}.webp`}
-            alt={member.alt}
-            fill
-            sizes="(min-width: 768px) 17rem, 70vw"
-            className="object-contain object-bottom"
-          />
-        ) : (
+      {hasArt(member.id) ? (
+        // Real art: the character's scene from the film, full bleed. The image sits a little
+        // oversized and drifts inside its frame on scroll, so each card has depth.
+        <div data-parallax-scope className="relative aspect-[4/5] w-full overflow-hidden rounded-t-ui">
+          <div data-parallax="0.14" className="absolute inset-x-0 -inset-y-[9%]">
+            <Image
+              src={`/crew/${member.id}.webp`}
+              alt={member.alt}
+              fill
+              sizes="(min-width: 768px) 30vw, 90vw"
+              className="object-cover"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="relative mx-auto aspect-[4/5] w-full max-w-[17rem] px-6 pt-8">
           <div role="img" aria-label={member.alt} className="h-full w-full">
             <Placeholder />
           </div>
-        )}
-      </div>
+        </div>
+      )}
       <div className="border-t border-border px-6 pb-7 pt-5">
         <p className="text-ui font-semibold text-text-muted">{member.label}</p>
         <h3 className="mt-1 text-title font-black uppercase">{member.role}</h3>
