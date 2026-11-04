@@ -2,15 +2,34 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { animate, motion, useMotionTemplate, useMotionValue, useReducedMotion } from "motion/react";
-import { Volume2 } from "lucide-react";
 import { REVEALED_EVENT, markIntroSeen } from "@/lib/intro";
 
 type Stage = "loading" | "film" | "orb";
 
-const FILMS = [
-  { src: "/intro/intro.webm", type: 'video/webm; codecs="vp9, opus"' },
-  { src: "/intro/intro.mp4", type: 'video/mp4; codecs="avc1.640028, mp4a.40.2"' },
-];
+type Film = { src: string; type: string };
+// VP9 for Chrome / Edge / Firefox, HEVC for Safari, H.264 as the last resort.
+const FILMS: Record<"1080" | "720", Film[]> = {
+  "1080": [
+    { src: "/intro/intro-1080.webm", type: 'video/webm; codecs="vp9, opus"' },
+    { src: "/intro/intro-1080-hevc.mp4", type: 'video/mp4; codecs="hvc1.1.6.L120.90, mp4a.40.2"' },
+  ],
+  "720": [
+    { src: "/intro/intro-720.webm", type: 'video/webm; codecs="vp9, opus"' },
+    { src: "/intro/intro-720-hevc.mp4", type: 'video/mp4; codecs="hvc1.1.6.L93.90, mp4a.40.2"' },
+    { src: "/intro/intro-720.mp4", type: 'video/mp4; codecs="avc1.64001f, mp4a.40.2"' },
+  ],
+};
+
+/** 1080p for screens that can show it (and a connection that isn't asking to save data), else 720p. */
+function pickFilm(): Film {
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  const slow = conn?.saveData || /(^|-)2g|3g/.test(conn?.effectiveType ?? "");
+  // The width the film is drawn at, in device pixels (portrait phones letterbox it to the screen width).
+  const px = window.innerWidth * (window.devicePixelRatio || 1);
+  const probe = document.createElement("video");
+  const playable = (list: Film[]) => list.find((f) => probe.canPlayType(f.type) === "probably");
+  return (!slow && px > 1280 && playable(FILMS["1080"])) || playable(FILMS["720"]) || FILMS["720"][2];
+}
 const MIN_LOADER_MS = 1800; // the line never rushes, even on a fast connection
 const BEHIND = ["#main", "header[data-navbar]", "footer", "a[href='#main']"];
 
@@ -20,8 +39,8 @@ const expandEase = [0.7, 0, 0.2, 1] as const; // slow start, fast middle, hard s
 /**
  * Loading line (downloads the whole film) → film → orange orb reveal → removed from the DOM.
  * The line's progress is the real download progress, so the film never stalls once it starts.
- * Sound needs a gesture: a tap or key press during the loader gives it; otherwise the film plays
- * muted (it has burned-in subtitles) with a "Tap for sound" button.
+ * Sound needs a gesture: a tap or key press during the loader gives it. Otherwise the film starts
+ * muted (it has burned-in subtitles) and the first tap or key press anywhere turns the sound on.
  * The landing page is already rendered underneath; this layer only covers it.
  * Esc at any point skips straight to the page.
  */
@@ -29,7 +48,6 @@ export default function IntroSequence() {
   const [stage, setStage] = useState<Stage>("loading");
   const [fromFilm, setFromFilm] = useState(false); // the orb grows over the film's last frame
   const [filmUrl, setFilmUrl] = useState<string | null>(null);
-  const [muted, setMuted] = useState(false);
   const [done, setDone] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
   const dialog = useRef<HTMLDivElement>(null);
@@ -118,8 +136,7 @@ export default function IntroSequence() {
   // and takes at least MIN_LOADER_MS.
   useEffect(() => {
     const ctrl = new AbortController();
-    const probe = document.createElement("video");
-    const film = FILMS.find((f) => probe.canPlayType(f.type)) ?? FILMS[FILMS.length - 1];
+    const film = pickFilm();
     let loaded = 0;
     let blobUrl: string | null = null;
     let raf = 0;
@@ -173,7 +190,7 @@ export default function IntroSequence() {
   }, [progress, startOrb]);
 
   // Film downloaded: fade the line out and play. With no earlier tap, browsers block sound,
-  // so fall back to muted with a "Tap for sound" button.
+  // so it starts muted and the first tap or key press turns the sound on (no button).
   useEffect(() => {
     const v = video.current;
     if (!filmUrl || !v || finished.current) return;
@@ -181,13 +198,9 @@ export default function IntroSequence() {
     v.src = filmUrl;
     v.muted = false;
     v.play().then(
-      () => {
-        setMuted(false);
-        setStage("film");
-      },
+      () => setStage("film"),
       () => {
         v.muted = true;
-        setMuted(true);
         v.play().then(
           () => setStage("film"),
           () => startOrb(),
@@ -196,12 +209,21 @@ export default function IntroSequence() {
     );
   }, [filmUrl, lineOpacity, startOrb]);
 
-  function unmute() {
-    const v = video.current;
-    if (!v) return;
-    v.muted = false;
-    setMuted(false);
-  }
+  // Muted film: any tap or key (other than Esc, which skips) brings the sound in.
+  useEffect(() => {
+    if (stage !== "film") return;
+    const unmute = (e: Event) => {
+      const v = video.current;
+      if (!v || !v.muted || (e instanceof KeyboardEvent && e.key === "Escape")) return;
+      v.muted = false;
+    };
+    window.addEventListener("pointerdown", unmute);
+    window.addEventListener("keydown", unmute);
+    return () => {
+      window.removeEventListener("pointerdown", unmute);
+      window.removeEventListener("keydown", unmute);
+    };
+  }, [stage]);
 
   if (done) return null;
 
@@ -245,16 +267,6 @@ export default function IntroSequence() {
       </motion.div>
 
       <div className="absolute bottom-5 right-5 flex items-center gap-3 sm:bottom-6 sm:right-6">
-        {stage === "film" && muted && (
-          <button
-            type="button"
-            onClick={unmute}
-            className="press inline-flex items-center gap-2 rounded-ui bg-text px-4 py-2.5 text-ui font-semibold text-bg"
-          >
-            <Volume2 aria-hidden="true" className="size-4" />
-            Tap for sound
-          </button>
-        )}
         {stage !== "orb" && (
           <button
             type="button"
