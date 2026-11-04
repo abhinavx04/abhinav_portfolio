@@ -5,6 +5,19 @@ import { AboutJourney } from "@/components/sections/AboutJourney";
 import { Contact } from "@/components/sections/Contact";
 import { NavSpy } from "@/components/nav/NavSpy";
 import { IntroGate } from "@/components/intro/IntroGate";
+import { site } from "@/content/site";
+
+// Structured data: tells search engines who this site is about.
+const personJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: site.name,
+  url: site.url,
+  jobTitle: "AI Generalist Intern",
+  worksFor: { "@type": "Organization", name: "Plivo" },
+  alumniOf: { "@type": "CollegeOrUniversity", name: "SRM Institute of Science and Technology" },
+  sameAs: [site.links.linkedin, site.links.github],
+};
 
 export default function Home() {
   return (
@@ -16,6 +29,11 @@ export default function Home() {
       <Contact />
       <NavSpy />
       <IntroGate />
+      <script
+        type="application/ld+json"
+        // Escape "<" so content can never close the script tag.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd).replace(/</g, "\\u003c") }}
+      />
     </>
   );
 }
