@@ -1,6 +1,7 @@
 import { about, timeline } from "@/content/timeline";
 import { skills } from "@/content/skills";
 import { sectionTitle } from "@/components/ui/styles";
+import { Timeline } from "./Timeline";
 
 /** About (left) + Journey timeline (right), skills row underneath. Stacks on phones. */
 export function AboutJourney() {
@@ -16,31 +17,7 @@ export function AboutJourney() {
 
         <div className="lg:col-span-6 lg:col-start-7">
           <h3 className="text-ui font-semibold text-text-muted">Journey</h3>
-          {/* The orange line is its own element so Phase 5 can draw it (scaleY). */}
-          <div className="relative mt-6">
-            <span
-              aria-hidden="true"
-              data-timeline-line
-              className="absolute bottom-2 left-[4.25rem] top-2 w-0.5 origin-top bg-orange sm:left-[5.25rem]"
-            />
-            <ol className="flex flex-col gap-9">
-              {timeline.map((t, i) => (
-                <li key={i} data-timeline-item className="grid grid-cols-[4.25rem_1fr] sm:grid-cols-[5.25rem_1fr]">
-                  <span className="pt-0.5 text-ui font-black uppercase tabular-nums text-orange">{t.year}</span>
-                  <div className="relative pl-7">
-                    <span
-                      aria-hidden="true"
-                      className="absolute -left-[5px] top-1.5 size-3 rounded-full border-2 border-orange bg-bg"
-                    />
-                    <p className="font-semibold leading-snug text-text">{t.title}</p>
-                    <p className="text-text-muted">{t.org}</p>
-                    {t.period && <p className="mt-1 text-ui text-text-muted">{t.period}</p>}
-                    {t.detail && <p className="mt-2 text-text-muted">{t.detail}</p>}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
+          <Timeline items={timeline} />
         </div>
       </div>
 
