@@ -4,6 +4,7 @@ import { Work } from "@/components/sections/Work";
 import { AboutJourney } from "@/components/sections/AboutJourney";
 import { Contact } from "@/components/sections/Contact";
 import { NavSpy } from "@/components/nav/NavSpy";
+import { IntroGate } from "@/components/intro/IntroGate";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <AboutJourney />
       <Contact />
       <NavSpy />
+      <IntroGate />
     </>
   );
 }
