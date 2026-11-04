@@ -165,6 +165,40 @@ html:has(.mobile-menu[open]) {
   overflow: hidden;
 }
 
+/* ── Intro (src/components/intro) ───────────────────────────────────────────── */
+.intro-cover {
+  display: none;
+}
+/* Shown from the first paint until the intro layer mounts. If JS never arrives, it lets go
+   after 10s so the page is never trapped behind it. */
+html[data-intro="play"] .intro-cover {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  animation: intro-failsafe 300ms 10s forwards;
+}
+@keyframes intro-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+html[data-intro="play"],
+html[data-intro="running"] {
+  overflow: hidden;
+}
+.intro-video {
+  object-fit: cover;
+}
+/* Narrow portrait screens: show the whole frame rather than cropping the film. */
+@media (max-aspect-ratio: 3/4) {
+  .intro-video {
+    object-fit: contain;
+  }
+}
+
 @media (prefers-contrast: more) {
   :root {
     --color-border: #9a9aa5;

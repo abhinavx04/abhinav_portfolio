@@ -3,6 +3,7 @@ import { inter } from "./fonts";
 import { Navbar } from "@/components/nav/Navbar";
 import { Footer } from "@/components/Footer";
 import { site } from "@/content/site";
+import { INTRO_SCRIPT } from "@/lib/intro";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,8 +26,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={inter.variable}>
+    // suppressHydrationWarning: the pre-paint script adds data-intro to <html> before React loads.
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        {/* Decides before first paint whether the intro plays, so there is never a flash. */}
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
+      </head>
       <body>
+        {/* Solid black cover shown instantly when the intro will play (CSS keys off data-intro). */}
+        <div aria-hidden="true" className="intro-cover" />
         <a
           href="#main"
           className="sr-only z-[60] rounded-ui bg-text px-4 py-3 font-semibold text-bg focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
