@@ -2,6 +2,7 @@ import Link from "next/link";
 import { nav, site } from "@/content/site";
 import { DripSkirt } from "./DripSkirt";
 import { MobileMenu } from "./MobileMenu";
+import { NavScroll } from "./NavScroll";
 
 /**
  * Signature element: a solid orange bar that melts into drips (DESIGN.md, "Signature").
@@ -46,6 +47,7 @@ export function Navbar() {
         </div>
       </div>
       <DripSkirt />
+      <NavScroll />
     </header>
   );
 }
