@@ -5,31 +5,40 @@ import { animate, motion, useMotionTemplate, useMotionValue, useReducedMotion } 
 import { Volume2 } from "lucide-react";
 import { REVEALED_EVENT, markIntroSeen } from "@/lib/intro";
 
-type Stage = "card" | "film" | "orb";
+type Stage = "loading" | "film" | "orb";
 
-const ENTER = "ENTER MY WORLD";
-const AUTOPLAY_AFTER_MS = 6000;
+const FILMS = [
+  { src: "/intro/intro.webm", type: 'video/webm; codecs="vp9, opus"' },
+  { src: "/intro/intro.mp4", type: 'video/mp4; codecs="avc1.640028, mp4a.40.2"' },
+];
+const MIN_LOADER_MS = 1800; // the line never rushes, even on a fast connection
 const BEHIND = ["#main", "header[data-navbar]", "footer", "a[href='#main']"];
 
 const ease = [0.2, 0, 0, 1] as const; // the site's "settle" curve
 const expandEase = [0.7, 0, 0.2, 1] as const; // slow start, fast middle, hard stop
 
 /**
- * "ENTER MY WORLD" → film (43s, with sound) → orange orb reveal → removed from the DOM.
- * The click on ENTER MY WORLD is the gesture that lets the film play with sound.
+ * Loading line (downloads the whole film) → film → orange orb reveal → removed from the DOM.
+ * The line's progress is the real download progress, so the film never stalls once it starts.
+ * Sound needs a gesture: a tap or key press during the loader gives it; otherwise the film plays
+ * muted (it has burned-in subtitles) with a "Tap for sound" button.
  * The landing page is already rendered underneath; this layer only covers it.
  * Esc at any point skips straight to the page.
  */
 export default function IntroSequence() {
-  const [stage, setStage] = useState<Stage>("card");
+  const [stage, setStage] = useState<Stage>("loading");
   const [fromFilm, setFromFilm] = useState(false); // the orb grows over the film's last frame
+  const [filmUrl, setFilmUrl] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [done, setDone] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
-  const interacted = useRef(false);
+  const dialog = useRef<HTMLDivElement>(null);
   const finished = useRef(false);
-  const broken = useRef(false); // film missing or unplayable: ENTER goes straight to the orb
   const reduced = useReducedMotion();
+
+  // Loader line: 0 → 1 across the screen.
+  const progress = useMotionValue(0);
+  const lineOpacity = useMotionValue(1);
 
   // Orb: orange disc radius, and the radius of the hole that shows the live page.
   const orange = useMotionValue(0);
@@ -59,10 +68,10 @@ export default function IntroSequence() {
   const startOrb = useCallback(
     async (afterFilm = false) => {
       if (finished.current) return;
-      interacted.current = true;
       video.current?.pause();
       setFromFilm(afterFilm);
       setStage("orb");
+      animate(lineOpacity, 0, { duration: 0.2, ease });
 
       if (reduced) {
         await animate(overlayOpacity, 0, { duration: 0.3, ease });
@@ -71,7 +80,7 @@ export default function IntroSequence() {
       }
 
       const cover = Math.hypot(window.innerWidth, window.innerHeight) / 2 + 24;
-      // 1. A small orange circle: the words collapse into it, or it appears over the film's last frame.
+      // 1. A small orange circle appears in the centre.
       await animate(orange, 44, { type: "spring", bounce: 0, duration: 0.45 });
       // 2. One pulse.
       await animate(orange, [44, 58, 44], { duration: 0.42, ease, times: [0, 0.45, 1] });
@@ -82,21 +91,15 @@ export default function IntroSequence() {
       ]);
       finish();
     },
-    [finish, hole, orange, overlayOpacity, reduced],
+    [finish, hole, lineOpacity, orange, overlayOpacity, reduced],
   );
-
-  // The film can't play: back to the card, where ENTER now goes straight to the orb.
-  const onBroken = useCallback(() => {
-    broken.current = true;
-    if (finished.current) return;
-    video.current?.pause();
-    setStage((s) => (s === "film" ? "card" : s));
-  }, []);
 
   // Lock the page underneath while the intro runs.
   useEffect(() => {
     document.documentElement.setAttribute("data-intro", "running");
     for (const sel of BEHIND) document.querySelector(sel)?.setAttribute("inert", "");
+    // Focus the dialog itself: keyboard users start inside it, with no ring pulling the eye off the line.
+    dialog.current?.focus();
     return () => {
       for (const sel of BEHIND) document.querySelector(sel)?.removeAttribute("inert");
     };
@@ -111,52 +114,87 @@ export default function IntroSequence() {
     return () => window.removeEventListener("keydown", onKey);
   }, [finish]);
 
-  // A missing or broken video: ENTER MY WORLD skips the film.
+  // Download the whole film while the line runs. The line follows the real bytes, smoothed,
+  // and takes at least MIN_LOADER_MS.
   useEffect(() => {
-    const v = video.current;
-    const sources = v?.querySelectorAll("source");
-    const last = sources?.[sources.length - 1];
-    if (!v || !last) return;
-    last.addEventListener("error", onBroken);
-    v.addEventListener("error", onBroken);
-    // The error may have fired before hydration attached the listener.
-    if (v.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) onBroken();
-    return () => {
-      last.removeEventListener("error", onBroken);
-      v.removeEventListener("error", onBroken);
+    const ctrl = new AbortController();
+    const probe = document.createElement("video");
+    const film = FILMS.find((f) => probe.canPlayType(f.type)) ?? FILMS[FILMS.length - 1];
+    let loaded = 0;
+    let blobUrl: string | null = null;
+    let raf = 0;
+    const t0 = performance.now();
+
+    const tick = () => {
+      const time = Math.min((performance.now() - t0) / MIN_LOADER_MS, 1);
+      const target = Math.min(loaded, time);
+      const cur = progress.get();
+      const next = target >= 1 && cur > 0.995 ? 1 : cur + (target - cur) * 0.08;
+      progress.set(next);
+      if (next >= 1 && blobUrl) {
+        setFilmUrl(blobUrl);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
     };
-  }, [onBroken]);
+    raf = requestAnimationFrame(tick);
 
-  // Nobody tapped within 6s: start the film muted and offer sound.
+    (async () => {
+      try {
+        const res = await fetch(film.src, { signal: ctrl.signal });
+        if (!res.ok || !res.body) throw new Error(`film ${res.status}`);
+        const total = Number(res.headers.get("content-length")) || 0;
+        const reader = res.body.getReader();
+        const chunks: Uint8Array<ArrayBuffer>[] = [];
+        let got = 0;
+        for (;;) {
+          const { done: end, value } = await reader.read();
+          if (end) break;
+          chunks.push(value);
+          got += value.length;
+          // Without a length the line creeps towards the end instead of jumping.
+          loaded = total ? Math.min(got / total, 0.999) : 1 - 1 / (1 + got / 2_000_000);
+        }
+        blobUrl = URL.createObjectURL(new Blob(chunks, { type: film.type.split(";")[0] }));
+        loaded = 1;
+      } catch {
+        if (ctrl.signal.aborted) return;
+        // No film: skip straight to the orb.
+        cancelAnimationFrame(raf);
+        startOrb();
+      }
+    })();
+
+    return () => {
+      ctrl.abort();
+      cancelAnimationFrame(raf);
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [progress, startOrb]);
+
+  // Film downloaded: fade the line out and play. With no earlier tap, browsers block sound,
+  // so fall back to muted with a "Tap for sound" button.
   useEffect(() => {
-    if (stage !== "card") return;
-    const t = window.setTimeout(() => {
-      const v = video.current;
-      if (interacted.current || broken.current || !v) return;
-      v.muted = true;
-      setMuted(true);
-      v.play().then(
-        () => setStage("film"),
-        () => {}, // autoplay blocked even muted: stay on the card
-      );
-    }, AUTOPLAY_AFTER_MS);
-    return () => window.clearTimeout(t);
-  }, [stage]);
-
-  function enter() {
     const v = video.current;
-    interacted.current = true;
-    if (!v || broken.current) return void startOrb();
+    if (!filmUrl || !v || finished.current) return;
+    animate(lineOpacity, 0, { duration: 0.35, ease });
+    v.src = filmUrl;
     v.muted = false;
-    setMuted(false);
-    setStage("film");
-    // play() must be called inside the click for sound to be allowed.
-    v.play().catch(() => {
-      v.muted = true;
-      setMuted(true);
-      v.play().catch(() => startOrb());
-    });
-  }
+    v.play().then(
+      () => {
+        setMuted(false);
+        setStage("film");
+      },
+      () => {
+        v.muted = true;
+        setMuted(true);
+        v.play().then(
+          () => setStage("film"),
+          () => startOrb(),
+        );
+      },
+    );
+  }, [filmUrl, lineOpacity, startOrb]);
 
   function unmute() {
     const v = video.current;
@@ -168,14 +206,15 @@ export default function IntroSequence() {
   if (done) return null;
 
   const showVideo = stage === "film" || (stage === "orb" && fromFilm);
-  const showWords = stage === "card" || (stage === "orb" && !fromFilm);
 
   return (
     <motion.div
+      ref={dialog}
       role="dialog"
       aria-modal="true"
       aria-label="Intro"
-      className="fixed inset-0 z-[101] overflow-hidden"
+      tabIndex={-1}
+      className="fixed inset-0 z-[101] overflow-hidden outline-none"
       style={{
         opacity: overlayOpacity,
         maskImage: stage === "orb" && !reduced ? mask : undefined,
@@ -184,34 +223,39 @@ export default function IntroSequence() {
     >
       <div className="absolute inset-0 bg-black" />
 
-      {/* Mounted from the start so it buffers while the card is up; visible once it plays. */}
-      {(stage !== "orb" || fromFilm) && (
-        <video
-          ref={video}
-          className={`intro-video absolute inset-0 h-full w-full bg-black ${showVideo ? "opacity-100" : "opacity-0"}`}
-          preload="auto"
-          playsInline
-          poster="/intro/poster.webp"
-          onEnded={() => startOrb(true)}
-          aria-hidden={stage !== "film"}
-        >
-          <source src="/intro/intro.webm" type="video/webm" />
-          <source src="/intro/intro.mp4" type="video/mp4" />
-        </video>
-      )}
+      <video
+        ref={video}
+        className={`intro-video absolute inset-0 h-full w-full bg-black transition-opacity duration-500 ${showVideo ? "opacity-100" : "opacity-0"}`}
+        playsInline
+        preload="none"
+        onEnded={() => startOrb(true)}
+        aria-hidden={stage !== "film"}
+      />
 
-      {stage === "film" && (
-        <div className="absolute bottom-5 right-5 flex items-center gap-3 sm:bottom-6 sm:right-6">
-          {muted && (
-            <button
-              type="button"
-              onClick={unmute}
-              className="press inline-flex items-center gap-2 rounded-ui bg-text px-4 py-2.5 text-ui font-semibold text-bg"
-            >
-              <Volume2 aria-hidden="true" className="size-4" />
-              Tap for sound
-            </button>
-          )}
+      {/* Loader: one hairline drawn across the screen as the film downloads. */}
+      <motion.div
+        role="progressbar"
+        aria-label="Loading intro"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2"
+        style={{ opacity: lineOpacity }}
+      >
+        <motion.div className="h-full origin-left bg-orange" style={{ scaleX: progress }} />
+      </motion.div>
+
+      <div className="absolute bottom-5 right-5 flex items-center gap-3 sm:bottom-6 sm:right-6">
+        {stage === "film" && muted && (
+          <button
+            type="button"
+            onClick={unmute}
+            className="press inline-flex items-center gap-2 rounded-ui bg-text px-4 py-2.5 text-ui font-semibold text-bg"
+          >
+            <Volume2 aria-hidden="true" className="size-4" />
+            Tap for sound
+          </button>
+        )}
+        {stage !== "orb" && (
           <button
             type="button"
             onClick={() => startOrb()}
@@ -219,72 +263,11 @@ export default function IntroSequence() {
           >
             Skip intro
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Orange disc: grows from the centre during the orb stage. */}
       <motion.div aria-hidden="true" className="absolute inset-0 bg-orange" style={{ clipPath }} />
-
-      {showWords && (
-        <div className="absolute inset-0 grid place-items-center px-6">
-          <div className="flex flex-col items-center gap-6">
-            <button
-              type="button"
-              onClick={enter}
-              disabled={stage === "orb"}
-              autoFocus
-              aria-label="Enter my world"
-              aria-describedby="intro-hint"
-              className="press text-center text-[clamp(2.25rem,8vw,6.5rem)] font-black uppercase leading-[0.9] tracking-[-0.035em] text-text"
-            >
-              {ENTER.split(" ").map((word, w, words) => (
-                <span key={w} className="inline-block whitespace-nowrap">
-                  {[...word].map((ch, i) => {
-                    const index = words.slice(0, w).join("").length + i;
-                    return (
-                      <motion.span
-                        key={i}
-                        aria-hidden="true"
-                        className="inline-block"
-                        initial={{ opacity: 0 }}
-                        animate={
-                          stage === "orb"
-                            ? { opacity: 0, scale: 0.2, transition: { duration: 0.25, ease } }
-                            : { opacity: 1, transition: { duration: 0.35, ease, delay: 0.15 + index * 0.045 } }
-                        }
-                      >
-                        {ch}
-                      </motion.span>
-                    );
-                  })}
-                  {w < words.length - 1 && <span aria-hidden="true">&nbsp;</span>}
-                </span>
-              ))}
-            </button>
-            <motion.p
-              id="intro-hint"
-              className="text-ui text-text-muted"
-              initial={{ opacity: 0 }}
-              animate={
-                stage === "orb"
-                  ? { opacity: 0, transition: { duration: 0.2, ease } }
-                  : { opacity: 1, transition: { duration: 0.4, ease, delay: 0.9 } }
-              }
-            >
-              Plays a 43 second film, with sound.
-            </motion.p>
-          </div>
-          {stage === "card" && (
-            <button
-              type="button"
-              onClick={() => startOrb()}
-              className="absolute bottom-6 right-6 py-2 text-ui font-semibold text-text-muted underline underline-offset-4 transition-colors hover:text-text"
-            >
-              Skip intro
-            </button>
-          )}
-        </div>
-      )}
     </motion.div>
   );
 }

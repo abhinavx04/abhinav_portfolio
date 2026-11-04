@@ -9,8 +9,9 @@ are listed at the end.
 ```
 Idea:        A developer's story told as the end credits of his own action film.
 Metaphor:    RUNTIME, the 43s trailer: rain city, red-alarm server room, the crew, "DEPLOYED".
-Signature:   "ENTER MY WORLD" opens the 43s film; as it ends an orange orb swallows the last frame and
-             the live page is revealed under it; the navbar melts in as an orange drip.
+Signature:   An orange hairline draws across the dark screen while the film downloads; the 41s film
+             plays and, on its last line, an orange orb swallows the frame and the live page is
+             revealed under it; the navbar melts in as an orange drip.
 Emotion:     First 3 seconds after the reveal: calm, confident, quiet after the noise.
 Motion verb: "Settle like a poster being slapped onto a wall": things arrive fast and stop
              dead. No wobble, no float, no loops.
