@@ -2,8 +2,11 @@
 
 import { forgetIntro } from "@/lib/intro";
 
-/** Footer link: full reload with ?intro=play so the pre-paint script runs the intro again. */
-export function ReplayIntro() {
+const QUIET =
+  "py-2 text-left font-semibold text-text underline decoration-border decoration-2 underline-offset-4 transition-colors duration-200 hover:decoration-orange";
+
+/** Replays the intro film: full reload with ?intro=play so the pre-paint script runs it again. */
+export function ReplayIntro({ className = QUIET, children = "Replay intro" }: { className?: string; children?: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -14,9 +17,9 @@ export function ReplayIntro() {
         // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.assign("/?intro=play");
       }}
-      className="py-2 text-left font-semibold text-text underline decoration-border decoration-2 underline-offset-4 transition-colors duration-200 hover:decoration-orange"
+      className={className}
     >
-      Replay intro
+      {children}
     </button>
   );
 }

@@ -2,6 +2,7 @@ import { about, timeline } from "@/content/timeline";
 import { skills } from "@/content/skills";
 import { sectionTitle } from "@/components/ui/styles";
 import { Timeline } from "./Timeline";
+import { Photos } from "./Photos";
 
 /** About (left) + Journey timeline (right), skills row underneath. Stacks on phones. */
 export function AboutJourney() {
@@ -13,6 +14,7 @@ export function AboutJourney() {
             About
           </h2>
           <p className="mt-8 max-w-[58ch] text-body text-text">{about}</p>
+          <Photos />
         </div>
 
         <div className="lg:col-span-6 lg:col-start-7">

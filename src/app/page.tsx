@@ -3,6 +3,9 @@ import { Crew } from "@/components/sections/Crew";
 import { Work } from "@/components/sections/Work";
 import { AboutJourney } from "@/components/sections/AboutJourney";
 import { Contact } from "@/components/sections/Contact";
+import { StackBand } from "@/components/sections/StackBand";
+import { FilmStrip } from "@/components/sections/FilmStrip";
+import { MotionField } from "@/components/motion/MotionField";
 import { NavSpy } from "@/components/nav/NavSpy";
 import { IntroGate } from "@/components/intro/IntroGate";
 import { site } from "@/content/site";
@@ -23,11 +26,14 @@ export default function Home() {
   return (
     <>
       <Hero />
+      <StackBand />
       <Crew />
+      <FilmStrip />
       <Work />
       <AboutJourney />
       <Contact />
       <NavSpy />
+      <MotionField />
       <IntroGate />
       <script
         type="application/ld+json"
