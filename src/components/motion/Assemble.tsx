@@ -38,8 +38,9 @@ export function AssembleItem({
     ? // x/y are reset explicitly: the server renders the full-motion start position.
       { apart: { opacity: 0, x: 0, y: 0 }, together: { opacity: 1, x: 0, y: 0, transition: { duration: 0.2 } } }
     : {
-        apart: { opacity: 0, ...OFFSET[from] },
-        together: { opacity: 1, x: 0, y: 0, transition: LOCK },
+        // Not clickable while offset: an invisible card must not cover the section below it.
+        apart: { opacity: 0, pointerEvents: "none", ...OFFSET[from] },
+        together: { opacity: 1, x: 0, y: 0, pointerEvents: "auto", transition: LOCK },
       };
   return (
     <motion.li variants={variants} className={className} data-reveal {...rest}>
