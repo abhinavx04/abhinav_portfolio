@@ -235,6 +235,53 @@ html[data-intro="running"] .drip {
     transform: translateY(0.75rem);
   }
 }
+
+/* Hero crew plate: the render melts into the page (its own background is near-black), floats a
+   few pixels at rest, and arrives after the name. Each transform lives on its own wrapper:
+   GSAP owns the parallax (outer) and the pointer tilt (middle); CSS owns the float (inner). */
+.hero-plate-mask {
+  /* Every edge fades to nothing: the render's background is a touch bluer than the page. */
+  mask-image:
+    linear-gradient(to right, transparent, #000 16%, #000 86%, transparent),
+    linear-gradient(to bottom, transparent, #000 10%, #000 74%, transparent);
+  mask-composite: intersect;
+}
+.hero-plate-in {
+  animation: plate-in 1100ms var(--ease-settle) 450ms backwards;
+}
+@keyframes plate-in {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+.hero-float {
+  animation: float 7s ease-in-out infinite;
+}
+@keyframes float {
+  50% {
+    transform: translateY(-0.6rem);
+  }
+}
+
+/* Lenis drives scrolling when motion is allowed: native smooth scroll would fight it. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+/* Scroll-driven film strip / marquee rows: no wrap, GPU-friendly. */
+.strip-row {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
 @keyframes fade-up {
   from {
     opacity: 0;
