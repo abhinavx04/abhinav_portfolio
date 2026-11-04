@@ -15,12 +15,15 @@ export function DripSkirt() {
           data-drip
           viewBox={`0 -1 100 ${lobe.l + 1}`}
           preserveAspectRatio="none"
-          className="absolute -top-px origin-top fill-orange"
+          className="drip absolute -top-px origin-top fill-orange"
           // Never narrower than 9rem: a drip needs a flat-enough sag bottom to hang from.
           style={{
             width: `max(${lobe.w}%, 9rem)`,
             left: `calc(${lobe.x}% - max(${lobe.w}%, 9rem) / 2)`,
             height: lobe.l + 1,
+            // Melt timing (globals.css, .drip): sags first, slightly out of step.
+            ["--d" as string]: `${i * 35}ms`,
+            ["--t" as string]: "620ms",
           }}
         >
           <path d={lobePath(lobe.l)} />
@@ -37,10 +40,19 @@ export function DripSkirt() {
             width={width}
             height={height + 1}
             viewBox={`0 -1 ${width} ${height + 1}`}
-            className={`absolute origin-top fill-orange ${drip.phone === false ? "hidden sm:block" : ""}`}
-            // Hangs from the lobe's lowest point. Centred with margin, not transform,
-            // so motion can own `transform` in Phase 5.
-            style={{ left: `${lobe.x}%`, top: lobe.l - 5, marginLeft: -width / 2 }}
+            className={`drip absolute fill-orange ${drip.phone === false ? "hidden sm:block" : ""}`}
+            // Hangs from the lobe's lowest point. Centred with margin, so `transform` is free
+            // for the melt. It scales from the bar edge (not its own top) and starts with its
+            // lobe, so it never detaches from the sag mid-animation.
+            style={{
+              left: `${lobe.x}%`,
+              top: lobe.l - 5,
+              marginLeft: -width / 2,
+              transformOrigin: `50% ${-(lobe.l - 5)}px`,
+              // Longer drips take longer to ooze down.
+              ["--d" as string]: `${drip.lobe * 35 + 40}ms`,
+              ["--t" as string]: `${620 + drip.l * 5}ms`,
+            }}
           >
             <path d={d} />
           </svg>
