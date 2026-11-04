@@ -11,12 +11,12 @@ function Line({ items, drift, accent }: { items: string[]; drift: string; accent
       <p
         data-parallax-x={drift}
         aria-hidden="true"
-        className={`strip-row gap-[0.6em] whitespace-nowrap text-[clamp(2rem,6.5vw,5.5rem)] font-black uppercase leading-[1.05] tracking-[-0.035em] ${accent ? "text-orange" : "text-text/20"}`}
+        className={`strip-row gap-[0.6em] whitespace-nowrap text-[clamp(2rem,6.5vw,5.5rem)] font-black uppercase leading-[1.05] tracking-[-0.035em] ${accent ? "text-orange" : "text-text-muted/70"}`}
       >
         {run.map((item, i) => (
           <span key={i} className="flex items-center gap-[0.6em]">
             {item}
-            <span className="text-[0.45em] text-text/25">●</span>
+            <span className="text-[0.45em] opacity-50">●</span>
           </span>
         ))}
       </p>
