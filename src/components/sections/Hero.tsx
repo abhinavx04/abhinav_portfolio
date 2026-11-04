@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { site } from "@/content/site";
 import { buttonPrimary, linkQuiet } from "@/components/ui/styles";
+import { HeroStageLoader } from "@/components/hero/HeroStageLoader";
 
 const WORDS = [
   { text: "Abhinav", accent: true },
@@ -27,11 +28,11 @@ export function Hero() {
       {/* Crew plate. Phone: a band above the name. Desktop: behind the name, to the right. */}
       <div
         data-parallax="0.35"
-        className="pointer-events-none relative mx-auto mt-[calc(var(--bar-h)+var(--skirt-h)-1rem)] aspect-[1376/768] w-[min(100%,46rem)] lg:absolute lg:right-[-3vw] lg:top-[calc(var(--bar-h)+1.5rem)] lg:mt-0 lg:w-[58vw] lg:max-w-[66rem]"
+        className="pointer-events-none relative mx-auto mt-[calc(var(--bar-h)+var(--skirt-h)-1rem)] aspect-[4/3] w-[min(100%,46rem)] sm:aspect-[1376/768] lg:absolute lg:right-[-3vw] lg:top-[calc(var(--bar-h)+1.5rem)] lg:mt-0 lg:w-[58vw] lg:max-w-[66rem]"
       >
-        <div data-tilt="5" className="h-full w-full">
+        <div data-tilt="5" data-hero-plate className="relative h-full w-full">
           <div className="hero-plate-in hero-anim h-full w-full">
-            <div className="hero-float hero-plate-mask relative h-full w-full">
+            <div className="hero-float hero-plate-mask hero-poster relative h-full w-full">
               <Image
                 src="/hero/crew.webp"
                 alt="The crew from RUNTIME: the Thinker, the Director and the Speedster"
@@ -41,6 +42,10 @@ export function Hero() {
                 className="object-contain"
               />
             </div>
+          </div>
+          {/* Live 3D crew, laid over the still once it has loaded. Wider than the still so the orbit never clips. */}
+          <div className="absolute inset-y-0 -inset-x-[5%] lg:-left-[9%] lg:-right-[1%]">
+            <HeroStageLoader />
           </div>
         </div>
       </div>

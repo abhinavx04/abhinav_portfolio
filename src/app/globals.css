@@ -255,6 +255,11 @@ html[data-intro="running"] .drip {
     transform: scale(1.06);
   }
 }
+/* The live 3D scene takes over from the still image once it is on screen. */
+[data-hero-plate][data-stage="on"] .hero-poster {
+  opacity: 0;
+  transition: opacity 900ms var(--ease-settle);
+}
 .hero-float {
   animation: float 7s ease-in-out infinite;
 }
