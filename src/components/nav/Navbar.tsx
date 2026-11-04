@@ -15,7 +15,7 @@ export function Navbar() {
         <div className="container-site flex h-[var(--bar-h)] items-center justify-between gap-6">
           <Link
             href="/"
-            className="press -my-2 inline-block py-3 text-[1.0625rem] font-black uppercase leading-none tracking-[-0.02em] sm:text-lg"
+            className="nav-link press relative -my-2 inline-block py-3 text-[1.0625rem] font-black uppercase leading-none tracking-[-0.02em] sm:text-lg"
           >
             {site.shortName}
             <span className="sr-only">, home</span>
@@ -37,7 +37,7 @@ export function Navbar() {
             </ul>
             <a
               href={site.links.resume}
-              className="press rounded-ui bg-on-orange px-4 py-2 text-ui font-semibold text-text transition-colors duration-150 hover:bg-bg"
+              className="press rounded-ui bg-on-orange px-4 py-2 text-ui font-semibold text-text transition-[background-color,translate] duration-200 ease-[var(--ease-settle)] hover:-translate-y-0.5 hover:bg-bg"
             >
               Resume
             </a>
