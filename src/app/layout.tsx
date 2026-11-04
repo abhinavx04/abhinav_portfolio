@@ -31,10 +31,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         {/* Decides before first paint whether the intro plays, so there is never a flash. */}
         <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
+        {/* Without JavaScript, scroll reveals never run: show their content as-is. */}
+        <noscript>
+          <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
       </head>
       <body>
         {/* Solid black cover shown instantly when the intro will play (CSS keys off data-intro). */}
         <div aria-hidden="true" className="intro-cover" />
+        {/* While this is on screen the navbar keeps its drips (NavScroll). */}
+        <div aria-hidden="true" data-top-sentinel className="pointer-events-none absolute left-0 top-0 h-10 w-px" />
         <a
           href="#main"
           className="sr-only z-[60] rounded-ui bg-text px-4 py-3 font-semibold text-bg focus:not-sr-only focus:fixed focus:left-4 focus:top-4"

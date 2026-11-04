@@ -199,6 +199,55 @@ html[data-intro="running"] {
   }
 }
 
+/* ── Signature animations 6.1 + 6.2 (pure CSS, start at first paint) ─────────── */
+/* Paused while the intro covers the page; they play the moment it hands over. */
+html[data-intro="play"] .hero-anim,
+html[data-intro="running"] .hero-anim,
+html[data-intro="play"] .drip,
+html[data-intro="running"] .drip {
+  animation-play-state: paused;
+}
+
+/* 6.1 Split-text hero: each letter drops in from a slight angle and settles straight. */
+.hero-letter {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  animation: letter-drop 560ms var(--ease-settle) backwards;
+  animation-delay: calc(120ms + var(--i) * 25ms);
+}
+@keyframes letter-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-0.32em) rotate(var(--r));
+  }
+}
+/* Tagline and buttons fade up once the name has landed. */
+.hero-after {
+  animation: fade-up 600ms var(--ease-settle) 700ms backwards;
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+
+/* 6.2 The melting drip: oozes down once, then retracts on scroll and returns at the top.
+   fill-mode backwards keeps the transition below in charge after the melt ends. */
+.drip {
+  animation: drip-melt var(--t, 700ms) cubic-bezier(0.45, 0, 0.2, 1) var(--d, 0ms) backwards;
+  transition: transform 360ms var(--ease-settle);
+}
+@keyframes drip-melt {
+  from {
+    transform: scaleY(0);
+  }
+}
+header[data-collapsed] .drip {
+  transform: scaleY(0);
+  transition-duration: 260ms;
+}
+
 @media (prefers-contrast: more) {
   :root {
     --color-border: #9a9aa5;
