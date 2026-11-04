@@ -43,12 +43,13 @@ export function Hero() {
         </span>
       </h1>
 
-      <div className="hero-after hero-anim mt-10 grid gap-8 sm:mt-14 md:grid-cols-12 md:items-end">
+      <div className="mt-10 grid gap-8 sm:mt-14 md:grid-cols-12 md:items-end">
         <div className="md:col-span-7">
-          <p className="text-ui font-semibold text-text-muted">{site.roles.join(" · ")}</p>
-          <p className="mt-3 max-w-[30ch] text-title font-semibold text-text">{site.tagline}</p>
+          <p className="hero-after hero-anim text-ui font-semibold text-text-muted">{site.roles.join(" · ")}</p>
+          {/* The page's LCP element: visible from the first paint, it only rises into place. */}
+          <p className="hero-rise hero-anim mt-3 max-w-[30ch] text-title font-semibold text-text">{site.tagline}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-x-7 gap-y-3 md:col-span-5">
+        <div className="hero-after hero-anim flex flex-wrap items-center gap-x-7 gap-y-3 md:col-span-5">
           <a href="#work" className={buttonPrimary}>
             See my work
           </a>

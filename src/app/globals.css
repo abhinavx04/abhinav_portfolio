@@ -221,9 +221,19 @@ html[data-intro="running"] .drip {
     transform: translateY(-0.32em) rotate(var(--r));
   }
 }
-/* Tagline and buttons fade up once the name has landed. */
+/* Roles and buttons fade up once the name has landed. */
 .hero-after {
   animation: fade-up 600ms var(--ease-settle) 700ms backwards;
+}
+/* The tagline is the page's LCP element (the name is split into letters), so it never starts
+   invisible: it only rises into place. Fading it in cost ~0.6s of mobile LCP. */
+.hero-rise {
+  animation: rise 700ms var(--ease-settle) 300ms backwards;
+}
+@keyframes rise {
+  from {
+    transform: translateY(0.75rem);
+  }
 }
 @keyframes fade-up {
   from {
