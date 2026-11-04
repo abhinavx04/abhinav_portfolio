@@ -5,7 +5,7 @@ import { AboutJourney } from "@/components/sections/AboutJourney";
 import { Contact } from "@/components/sections/Contact";
 import { StackBand } from "@/components/sections/StackBand";
 import { FilmStrip } from "@/components/sections/FilmStrip";
-import { MotionField } from "@/components/motion/MotionField";
+import { MotionFieldLoader } from "@/components/motion/MotionFieldLoader";
 import { NavSpy } from "@/components/nav/NavSpy";
 import { IntroGate } from "@/components/intro/IntroGate";
 import { site } from "@/content/site";
@@ -33,7 +33,7 @@ export default function Home() {
       <AboutJourney />
       <Contact />
       <NavSpy />
-      <MotionField />
+      <MotionFieldLoader />
       <IntroGate />
       <script
         type="application/ld+json"
