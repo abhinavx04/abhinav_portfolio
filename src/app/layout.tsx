@@ -6,6 +6,9 @@ import { site } from "@/content/site";
 import { INTRO_SCRIPT } from "@/lib/intro";
 import "./globals.css";
 
+const OG_ALT =
+  "The Thinker, the Director and the Speedster walk away from a green explosion. Caption: but who wrote the prompts?";
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: { default: `${site.name}, AI Generalist and Software Developer`, template: `%s | ${site.name}` },
@@ -16,10 +19,10 @@ export const metadata: Metadata = {
     siteName: site.name,
     title: site.name,
     description: site.description,
-    // PLACEHOLDER image: replace public/og.png with the trio walk-away frame (1200x630).
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: site.name }],
+    // The film's walk-away frame under the orange bar (rendered from public/film/still-38-6.webp).
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: OG_ALT }],
   },
-  twitter: { card: "summary_large_image", images: ["/og.png"] },
+  twitter: { card: "summary_large_image", images: [{ url: "/og.jpg", alt: OG_ALT }] },
 };
 
 export const viewport: Viewport = {

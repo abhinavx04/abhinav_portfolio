@@ -46,7 +46,7 @@ until they are filled in.
 | `public/crew/` | Crew cut-outs (WebP). Missing files fall back to flat drawn figures |
 | `public/models/` | The three characters as GLB (meshopt + WebP textures) for the 3D hero |
 | `public/photos/` | Optional. Up to 3 photos here turn on the Photos section at the next build |
-| `public/og.png` | The 1200x630 share image |
+| `public/og.jpg` | The 1200x630 share image: the walk-away frame under the orange bar |
 
 `scripts/intro-film/` is the film's edit pipeline (`recut.py`, `captions.mjs`, `mix.py`). It expects the
 source clips outside the repo.

@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps<"/work/[slug]">): P
     openGraph: {
       title: project.title,
       description: project.outcome,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: project.title }],
+      images: [{ url: "/og.jpg", width: 1200, height: 630, alt: project.title }],
     },
   };
 }
