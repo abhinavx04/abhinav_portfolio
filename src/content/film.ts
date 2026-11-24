@@ -1,10 +1,12 @@
-// The film section: frames from RUNTIME (public/film), in film order. `at` is where the frame sits
-// in the 41 second film. `story` is what shows when a visitor opens the frame.
+// The film section: frames from RUNTIME (public/film), in film order. `time` is where the frame sits
+// in the 41 second film (it places the frame on the section's timeline), `at` is the same moment as
+// shown to visitors, and `story` is the back story shown while that frame is on screen.
 // DRAFT stories: placeholders written from the film itself. Replace them with the real back stories.
 
 export type FilmStill = {
   src: string;
   alt: string;
+  time: number;
   at: string;
   title: string;
   story: string;
@@ -14,13 +16,16 @@ export const filmIntro = {
   eyebrow: "The film",
   heading: "Runtime",
   sub: "A 41 second film about a 2 AM outage, the crew that fixes it, and who wrote the prompts.",
-  hint: "Open a frame to read its back story.",
   carouselLabel: "Frames from Runtime",
+  timelineLabel: "Runtime timeline",
+  /** Length of the film in seconds: the end of the timeline. */
+  runtime: 41,
 };
 
 export const stills: FilmStill[] = [
   {
     src: "/film/still-1-6.webp",
+    time: 1.6,
     alt: "Bengaluru at 2 AM, rain on a neon street",
     at: "0:01",
     title: "2 AM",
@@ -29,6 +34,7 @@ export const stills: FilmStill[] = [
   },
   {
     src: "/film/still-5-0.webp",
+    time: 5,
     alt: "A glass of chai beside a laptop: prod is down",
     at: "0:05",
     title: "Prod is down",
@@ -37,6 +43,7 @@ export const stills: FilmStill[] = [
   },
   {
     src: "/film/still-13-4.webp",
+    time: 13.4,
     alt: "The Thinker, the Director and the Speedster walk down the server aisle",
     at: "0:13",
     title: "The crew",
@@ -45,6 +52,7 @@ export const stills: FilmStill[] = [
   },
   {
     src: "/film/still-26-0.webp",
+    time: 26,
     alt: "A monster made of bugs towers over the crew",
     at: "0:26",
     title: "The monster",
@@ -52,6 +60,7 @@ export const stills: FilmStill[] = [
   },
   {
     src: "/film/still-32-2.webp",
+    time: 32.2,
     alt: "Close up of the Director’s eyes, lit red",
     at: "0:32",
     title: "The call",
@@ -59,6 +68,7 @@ export const stills: FilmStill[] = [
   },
   {
     src: "/film/still-35-0.webp",
+    time: 35,
     alt: "The monster bursts apart: deployed",
     at: "0:35",
     title: "Deployed",
@@ -66,6 +76,7 @@ export const stills: FilmStill[] = [
   },
   {
     src: "/film/still-38-6.webp",
+    time: 38.6,
     alt: "The crew walks away from a green explosion",
     at: "0:38",
     title: "Walk away",

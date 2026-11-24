@@ -282,6 +282,78 @@ html.lenis body {
   overflow: clip;
 }
 
+/* ── Film section (FilmReel) ──────────────────────────────────────────────────
+   Scroll mode, when motion is allowed and the screen is tall enough to hold the stage: the stage
+   sticks under the bar and the page scroll is the film's playhead (one --film-step of scroll per
+   frame). Otherwise the frames are a plain strip that swipes sideways. FilmReel's SCROLL_QUERY must
+   match the media query below. */
+.film-area {
+  height: clamp(17rem, 40vw, 36rem);
+}
+.film-strip {
+  position: relative;
+  display: flex;
+  height: 100%;
+  align-items: center;
+  gap: 1.25rem;
+  padding-inline: var(--gutter);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.film-strip > li {
+  height: var(--film-card, 62%);
+  aspect-ratio: 16 / 9;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+}
+@media (prefers-reduced-motion: no-preference) and (min-height: 32rem) {
+  .film-track {
+    --film-step: 40svh;
+    height: calc(100svh - var(--bar-h) + var(--film-frames, 6) * var(--film-step));
+  }
+  .film-stage {
+    position: sticky;
+    top: var(--bar-h);
+    display: flex;
+    height: calc(100svh - var(--bar-h));
+    flex-direction: column;
+    justify-content: center;
+    padding-block: 1.25rem 1.5rem;
+  }
+  /* The ribbon gives way first on a short screen; the rest of the stage keeps its size. */
+  .film-area {
+    height: auto;
+    flex: 0 1 42%;
+    min-height: 10rem;
+  }
+  /* Room for the longest story (5 lines at phone and tablet widths), so a shorter one never
+     shifts the centred stage. */
+  .film-story {
+    min-height: calc(5em * var(--text-body--line-height));
+  }
+  /* The plain strip stands in until the WebGL ribbon loads (or for good, without WebGL): it is
+     moved by the same scroll, so it no longer scrolls on its own. */
+  .film-strip {
+    padding-inline: 0;
+    overflow: visible;
+    scroll-snap-type: none;
+    will-change: transform;
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (min-height: 32rem) and (min-width: 768px) {
+  .film-track {
+    --film-step: 45svh;
+  }
+  .film-stage {
+    padding-block: 1.5rem 2.5rem;
+  }
+  .film-area {
+    flex-basis: 56%;
+  }
+}
+
 /* Scroll-driven film strip / marquee rows: no wrap, GPU-friendly. */
 .strip-row {
   display: flex;

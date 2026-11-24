@@ -149,6 +149,35 @@ Work is a full-width ruled index (each project a row, the whole row is the link)
 four equal cards: the genericness test said four rounded cards is what any model would ship,
 and the brief allows "card per project" to be a row-card.
 
+### Film (RUNTIME): the page scroll is the playhead
+
+```
+DESKTOP (stage sticks under the bar)       PHONE 390 (same stage, stacked)
+┌──────────────────────────────┐           ┌────────────────┐
+│ [bar]                        │           │ [bar]          │
+│        ╭───────────╮╭──      │           │  ╭────────╮╭─  │
+│  ──╮   │ frame 04  ││ 05     │           │  │frame 04││   │
+│    ╰── ╰───────────╯╰──      │           │  ╰────────╯╰─  │
+│ 0:00 ─┼─┼───┼─────┃──┼─┼─┼ 0:41│         │0:00 ┼┼─┼──┃┼┼┼ 0:41│
+│ Frame 04 of 07 │ story, 52ch │           │ Frame 04 of 07 │
+│ THE MONSTER    │             │           │ THE MONSTER    │
+└──────────────────────────────┘           │ story, 5 lines │
+                                           └────────────────┘
+```
+
+- One driver: scroll through the section → a fractional frame → the ribbon, the playhead and
+  the story. Each frame rests centred for half its scroll (`40svh` phone, `45svh` desktop per
+  frame), then eases to the next, so a stop always lands on a frame or visibly between two.
+- Ticks sit at each frame's real timestamp in the 41s film; the orange playhead fills up to it.
+  Ticks, drag, swipe and arrow keys pick a frame by scrolling the page there (Lenis), so scroll
+  is the only thing that moves the ribbon. The ribbon is a straight strip, not a loop: its ends
+  rubber-band.
+- Phone: cards are capped at 72% of the width and the lens is widened, so the centred frame is
+  flat and only the neighbours curl. Vertical swipe plays, horizontal swipe jumps a frame.
+- Reduced motion, or a screen under 32rem tall: no sticky stage. A plain strip swipes sideways
+  and a tap on a frame or a tick shows its story. Without WebGL the plain strip is scroll-driven
+  instead of the ribbon. Screen readers get all seven stories as a list.
+
 ## Copy rules
 
 - First person, concise, sentence case, no buzzwords, no dash characters in visible text
