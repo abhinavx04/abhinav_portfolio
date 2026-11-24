@@ -1,7 +1,10 @@
 'use client';
 
 // Vendored from React Bits (FlexCarousel, TS + Tailwind). Local changes: no default stock photos,
-// an onFocusChange callback, a label prop, and the site's own focus ring instead of an inset shadow.
+// an onFocusChange callback, a label prop, the site's own focus ring instead of an inset shadow, and
+// outside control for the film section: `loop={false}` (a straight strip with soft ends), `onControl`
+// (a handle to seek to a fractional frame, e.g. from page scroll) and `onNavigate` (user input hands the frame
+// back to the page instead of moving the ribbon on its own).
 
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -50,10 +53,24 @@ export interface FlexCarouselProps extends Partial<PresetValues> {
   onSelect?: (index: number, item: FlexCarouselItem) => void;
   /** The focused (enlarged) card's index, or -1 when focus closes. */
   onFocusChange?: (index: number) => void;
+  /** false: a straight strip (no wrap-around) whose ends resist a drag instead of looping. */
+  loop?: boolean;
+  /** Receives a handle to drive the ribbon from outside (e.g. page scroll) once the engine starts, and null when it stops. */
+  onControl?: (control: FlexCarouselControl | null) => void;
+  /**
+   * When set, user input (drag, swipe, click, keys) does not settle the ribbon by itself: it lands on
+   * a frame, reports it here, and ignores `seek` until the outside driver has caught up with it.
+   */
+  onNavigate?: (index: number) => void;
   /** Accessible name of the carousel region. */
   label?: string;
   className?: string;
   style?: CSSProperties;
+}
+
+export interface FlexCarouselControl {
+  /** Move to a fractional frame: 2.5 is halfway between the third and fourth card. */
+  seek: (frame: number) => void;
 }
 
 interface Settings extends PresetValues {
@@ -67,6 +84,7 @@ interface Settings extends PresetValues {
   autoplay: boolean;
   interval: number;
   captureWheel: boolean;
+  loop: boolean;
 }
 
 interface Slot {
@@ -88,6 +106,8 @@ interface Metrics {
   centers: number[];
   gap: number;
   loop: number;
+  /** No wrap-around: positions run from the first centre to the last. */
+  linear: boolean;
 }
 
 interface Instance {
@@ -130,6 +150,8 @@ interface Callbacks {
   onChange?: (index: number, item: FlexCarouselItem) => void;
   onSelect?: (index: number, item: FlexCarouselItem) => void;
   onFocusChange?: (index: number) => void;
+  onNavigate?: (index: number) => void;
+  onControl?: (control: FlexCarouselControl | null) => void;
 }
 
 const DEFAULT_ITEMS: FlexCarouselItem[] = [];
@@ -197,6 +219,8 @@ const INTRO_DURATION: Record<string, number> = { rise: 2.1, bloom: 1.6, spin: 2.
 
 const wrap = (value: number, size: number) => ((((value + size / 2) % size) + size) % size) - size / 2;
 const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
+// Past an end the strip follows less and less (apple-design §9: resist, never hard-stop).
+const rubberband = (over: number, size: number) => (over * size * 0.55) / (size + 0.55 * Math.abs(over));
 const easeOut = (value: number) => 1 - Math.pow(1 - clamp01(value), 3);
 const easeOutQuint = (value: number) => 1 - Math.pow(1 - clamp01(value), 5);
 const easeInOut = (value: number) => {
@@ -385,6 +409,9 @@ const FlexCarousel = ({
   onChange,
   onSelect,
   onFocusChange,
+  loop = true,
+  onControl,
+  onNavigate,
   label: regionLabel = 'Image carousel',
   className = '',
   style
@@ -393,7 +420,7 @@ const FlexCarousel = ({
   const settingsRef = useRef<Settings | null>(null);
   const itemsRef = useRef<FlexCarouselItem[]>(items);
   const engineRef = useRef<Engine | null>(null);
-  const callbacksRef = useRef<Callbacks>({ onChange, onSelect, onFocusChange });
+  const callbacksRef = useRef<Callbacks>({ onChange, onSelect, onFocusChange, onNavigate, onControl });
   const [active, setActive] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [focusOpen, setFocusOpen] = useState(false);
@@ -407,7 +434,7 @@ const FlexCarousel = ({
 
   useEffect(() => {
     itemsRef.current = list;
-    callbacksRef.current = { onChange, onSelect, onFocusChange };
+    callbacksRef.current = { onChange, onSelect, onFocusChange, onNavigate, onControl };
     settingsRef.current = {
       intro,
       cardHeight,
@@ -428,7 +455,8 @@ const FlexCarousel = ({
       focusOnClick,
       autoplay,
       interval,
-      captureWheel
+      captureWheel,
+      loop
     };
     engineRef.current?.wake();
   });
@@ -564,6 +592,10 @@ const FlexCarousel = ({
     const introState = { kind: 'none', t: 0, running: false, done: false, readyAt: 0 };
     const focus = { index: -1, pending: -1, t: 0, v: 0, target: 0 };
     let instances: Instance[] = [];
+    // Outside control: the last frame asked for, and a hold after the user picked a frame so the
+    // driver's catch-up (e.g. the page scrolling there) cannot pull the ribbon back on the way.
+    let lastSeek: number | null = null;
+    const navHold = { index: -1, until: 0 };
 
     const loadSlot = (item: FlexCarouselItem, index: number): Slot => {
       const texture = new Texture(gl, {
@@ -658,14 +690,14 @@ const FlexCarousel = ({
         centers.push(cursor + widths[i] / 2);
         cursor += widths[i] + s.gap;
       }
-      return { cardH, widths, centers, gap: s.gap, loop: Math.max(cursor, 1) };
+      return { cardH, widths, centers, gap: s.gap, loop: Math.max(cursor, 1), linear: !s.loop };
     };
 
     const nearest = (m: Metrics, at: number) => {
       let best = 0;
       let bestDist = Infinity;
       for (let i = 0; i < m.centers.length; i++) {
-        const dist = Math.abs(wrap(m.centers[i] - at, m.loop));
+        const dist = Math.abs(m.linear ? m.centers[i] - at : wrap(m.centers[i] - at, m.loop));
         if (dist < bestDist) {
           bestDist = dist;
           best = i;
@@ -676,7 +708,40 @@ const FlexCarousel = ({
 
     const snapPoint = (m: Metrics, at: number) => {
       const i = nearest(m, at);
-      return at + wrap(m.centers[i] - at, m.loop);
+      return m.linear ? m.centers[i] : at + wrap(m.centers[i] - at, m.loop);
+    };
+
+    /** Position of a fractional frame, on the loop cycle nearest `near` when the ribbon wraps. */
+    const framePoint = (m: Metrics, frame: number, near: number) => {
+      const n = m.centers.length;
+      const f = Math.min(Math.max(frame, 0), n - 1);
+      const i = Math.min(Math.floor(f), Math.max(n - 2, 0));
+      const at = n > 1 ? m.centers[i] + (m.centers[i + 1] - m.centers[i]) * (f - i) : m.centers[0];
+      return m.linear ? at : near + wrap(at - near, m.loop);
+    };
+
+    /** With an outside driver, user input lands on a frame and hands it back instead of settling here. */
+    const commit = (m: Metrics) => {
+      const navigate = callbacksRef.current.onNavigate;
+      if (!navigate) return;
+      const index = nearest(m, goal);
+      navHold.index = index;
+      navHold.until = performance.now() + 1800;
+      navigate(index);
+    };
+
+    const seek = (frame: number) => {
+      lastSeek = frame;
+      const s = settingsRef.current;
+      if (!s || !slots.length || pointer.dragging) return;
+      if (navHold.index >= 0) {
+        if (Math.abs(frame - navHold.index) < 0.5 || performance.now() > navHold.until) navHold.index = -1;
+        else return;
+      }
+      goal = framePoint(metrics(s), frame, goal);
+      mode = 'seek';
+      dirty = true;
+      start();
     };
 
     const remap = (from: Metrics, to: Metrics, at: number) => {
@@ -687,6 +752,15 @@ const FlexCarousel = ({
     };
 
     const step = (m: Metrics, delta: number) => {
+      if (m.linear) {
+        const last = m.centers.length - 1;
+        goal = m.centers[Math.min(Math.max(nearest(m, goal) + Math.sign(delta) * Math.abs(delta), 0), last)];
+        mode = 'spring';
+        dirty = true;
+        start();
+        commit(m);
+        return;
+      }
       let at = snapPoint(m, goal);
       let index = nearest(m, at);
       const n = m.centers.length;
@@ -703,14 +777,16 @@ const FlexCarousel = ({
       mode = 'spring';
       dirty = true;
       start();
+      commit(m);
     };
 
     const goTo = (m: Metrics, index: number) => {
       const i = ((index % m.centers.length) + m.centers.length) % m.centers.length;
-      goal = goal + wrap(m.centers[i] - goal, m.loop);
+      goal = m.linear ? m.centers[i] : goal + wrap(m.centers[i] - goal, m.loop);
       mode = 'spring';
       dirty = true;
       start();
+      commit(m);
     };
 
     const openFocus = (index: number) => {
@@ -826,7 +902,7 @@ const FlexCarousel = ({
       let animating = false;
 
       if (resnap) {
-        goal = snapPoint(m, goal);
+        goal = lastSeek === null ? snapPoint(m, goal) : framePoint(m, lastSeek, goal);
         pos = goal;
         vel = 0;
         resnap = false;
@@ -841,7 +917,7 @@ const FlexCarousel = ({
       if (!introState.running && !introState.done) {
         const allSettled = slots.every(slot => slot.loaded || slot.failed);
         if (allSettled || now - introState.readyAt > 3500) {
-          goal = snapPoint(m, goal);
+          goal = lastSeek === null ? snapPoint(m, goal) : framePoint(m, lastSeek, goal);
           pos = goal;
           beginIntro(s, m);
         }
@@ -859,10 +935,12 @@ const FlexCarousel = ({
       if (mode === 'wheel' && now - wheelAt > 150) {
         goal = snapPoint(m, goal);
         mode = 'spring';
+        commit(m);
       }
       if (!pointer.dragging) {
         const spinning = introState.running && introState.kind === 'spin';
-        const stiffness = spinning ? 9 : mode === 'wheel' ? 80 : 55;
+        // 'seek' follows an outside driver that is already smoothed (Lenis), so it stays tight.
+        const stiffness = spinning ? 9 : mode === 'seek' ? 170 : mode === 'wheel' ? 80 : 55;
         const damping = 2 * Math.sqrt(stiffness);
         const steps = Math.ceil(dt / (1 / 240));
         const h = dt / steps;
@@ -881,7 +959,7 @@ const FlexCarousel = ({
         animating = true;
       }
 
-      if (Math.abs(pos) > m.loop * 8) {
+      if (!m.linear && Math.abs(pos) > m.loop * 8) {
         const shift = Math.round(pos / m.loop) * m.loop;
         pos -= shift;
         goal -= shift;
@@ -1000,8 +1078,9 @@ const FlexCarousel = ({
         const draws: Draw[] = [];
         for (let i = 0; i < n; i++) {
           const w = m.widths[i];
-          const baseRel = wrap(m.centers[i] - pos, m.loop);
-          for (let k = -3; k <= 3; k++) {
+          const baseRel = m.linear ? m.centers[i] - pos : wrap(m.centers[i] - pos, m.loop);
+          const copies = m.linear ? 0 : 3;
+          for (let k = -copies; k <= copies; k++) {
             const rel = baseRel + k * m.loop;
             if (Math.abs(rel) - w / 2 > width + 40) continue;
             const fx = effects.card ? effects.card(rel) : null;
@@ -1153,6 +1232,13 @@ const FlexCarousel = ({
         }
         if (pointer.dragging) {
           pos = pointer.startPos - (x - pointer.startX);
+          const s = settingsRef.current;
+          if (s && !s.loop && layout) {
+            const lo = layout.centers[0];
+            const hi = layout.centers[layout.centers.length - 1];
+            if (pos < lo) pos = lo - rubberband(lo - pos, width);
+            else if (pos > hi) pos = hi + rubberband(pos - hi, width);
+          }
           goal = pos;
           vel = 0;
           const now = performance.now();
@@ -1185,6 +1271,7 @@ const FlexCarousel = ({
         const landing = snapPoint(m, pos + velocity * 0.32);
         goal = landing;
         if (Math.abs(velocity) > 400 && Math.abs(landing - pos) < 1) step(m, velocity > 0 ? 1 : -1);
+        else commit(m);
         mode = 'spring';
         start();
         return;
@@ -1202,6 +1289,7 @@ const FlexCarousel = ({
         mode = 'spring';
         if (s.focusOnClick) focus.pending = hit.index;
         start();
+        commit(m);
       }
     };
 
@@ -1315,6 +1403,7 @@ const FlexCarousel = ({
       },
       setItems
     };
+    callbacksRef.current.onControl?.({ seek });
 
     resize();
     setItems(itemsRef.current);
@@ -1323,6 +1412,7 @@ const FlexCarousel = ({
       alive = false;
       visible = false;
       engineRef.current = null;
+      callbacksRef.current.onControl?.(null);
       cancelAnimationFrame(raf);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
