@@ -10,11 +10,11 @@ export const site = {
     "AI Generalist, data analyst and software developer. I turn messy data and manual work into systems that make sense.",
   roles: ["AI Generalist", "Data Analyst", "Software Developer"],
   tagline: "I turn messy data and manual work into systems that make sense.",
-  // PLACEHOLDER: real contact details.
-  email: "hello@example.com",
+  email: "abhinavpillai92@gmail.com",
   links: {
+    // PLACEHOLDER: real LinkedIn profile URL.
     linkedin: "https://www.linkedin.com/in/PLACEHOLDER",
-    github: "https://github.com/PLACEHOLDER",
+    github: "https://github.com/abhinavx04",
     resume: "/resume.pdf", // PLACEHOLDER: add public/resume.pdf
   },
 } as const;
