@@ -118,7 +118,8 @@
 }
 
 /* ── Navbar ────────────────────────────────────────────────────────────────── */
-/* Hover: a dark ink underline wipes in from the left. Active: solid purple (owner spec, Q1). */
+/* Hover: a dark ink underline wipes in from the left. Active: a heavier ink underline that stays
+   (Q1: purple on orange was 1.36:1, ink is 5.57:1; the extra pixel tells active from hover). */
 .nav-link::after {
   content: "";
   position: absolute;
@@ -134,7 +135,7 @@
   transform: scaleX(1);
 }
 .nav-link[aria-current]::after {
-  background: var(--color-purple);
+  height: 3px;
   transform: scaleX(1);
 }
 

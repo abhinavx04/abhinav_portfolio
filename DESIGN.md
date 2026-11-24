@@ -42,8 +42,8 @@ hover and focus feedback, and from the four one-shot animations.
 Rules
 - Purple is never body-size text on `surface` (4.25 fails AA). Tag pills: purple 1px outline,
   `text` coloured label.
-- Purple on orange is 1.36:1. The active nav underline (owner spec) is therefore paired with
-  `aria-current="page"`; see open question Q1.
+- Purple on orange is 1.36:1, so purple never marks state on the orange bar. The active nav
+  underline is `on-orange` ink (5.57:1), 3px against hover's 2px, plus `aria-current="page"` (Q1).
 - Flat and solid: no shadows, gradients, blur, glow, translucency anywhere.
 
 ## Type
@@ -169,5 +169,5 @@ and the brief allows "card per project" to be a row-card.
 
 ## Open questions
 
-- Q1: purple underline on orange is 1.36:1 (needs 3:1 for a state indicator). Options: keep as
-  specified, or make the active underline `on-orange` (5.57:1) and keep purple for hover/tags.
+- None. Q1 (active nav underline) settled 2026-11-24 by the owner: `on-orange` ink, 3px, instead of
+  purple (1.36:1 on orange). Purple stays for focus off the bar and for tags.
