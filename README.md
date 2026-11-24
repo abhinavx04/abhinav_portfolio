@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Abhinav Rajesh Pillai: portfolio
 
-## Getting Started
+My personal site. It opens with RUNTIME, a 41 second film about a 2 AM outage and the crew that
+fixes it: me (the Director), the Thinker (Claude) and the Speedster (Codex). The rest of the site is
+the end credits.
 
-First, run the development server:
+Built with Next.js 16 (App Router, Cache Components), React 19, Tailwind CSS 4, Motion, GSAP + Lenis
+for scroll, react-three-fiber for the 3D hero and ogl for the film carousel. Type is Inter only.
+
+DESIGN.md is the design source of truth: palette, type scale, motion rules, sections and the
+decisions behind them.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # production build (also type checks)
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Add `?intro=skip` to the URL to skip the film while working on the page.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Where to edit content
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All copy lives in `src/content/`; components only read from it.
 
-## Learn More
+| File | What it holds |
+| --- | --- |
+| `site.ts` | Name, roles, tagline, email, social links, resume path, production URL |
+| `projects.ts` | Work entries and the `/work/[slug]` case studies |
+| `timeline.ts` | The About journey |
+| `skills.ts` | The stack band |
+| `crew.ts` | The three crew cards |
+| `film.ts` | The film section: one back story per frame |
 
-To learn more about Next.js, take a look at the following resources:
+Lines marked `PLACEHOLDER` or `TODO [VERIFY]` are waiting on real details and stay hidden or generic
+until they are filled in.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Assets
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Folder | Contents |
+| --- | --- |
+| `public/intro/` | The intro film: 1080p and 720p in VP9, HEVC and H.264, picked by drawn width, plus the poster |
+| `public/film/` | Stills from the film, named by timestamp (`still-13-4` is 13.4 s) |
+| `public/crew/` | Crew cut-outs (WebP). Missing files fall back to flat drawn figures |
+| `public/models/` | The three characters as GLB (meshopt + WebP textures) for the 3D hero |
+| `public/photos/` | Optional. Up to 3 photos here turn on the Photos section at the next build |
+| `public/og.png` | The 1200x630 share image |
 
-## Deploy on Vercel
+`scripts/intro-film/` is the film's edit pipeline (`recut.py`, `captions.mjs`, `mix.py`). It expects the
+source clips outside the repo.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Performance guards
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The 3D hero starts on first interaction or after 8 s, and is skipped for reduced motion, data saver,
+  fewer than 4 cores or no WebGL. Below about 20 fps it falls back to the still image.
+- The film carousel loads only after the intro and only near its section. Reduced motion, data saver
+  and no WebGL 2 keep the plain scroll-snap strip.
+- GSAP and Lenis load after the page settles.
+
+## Deploy
+
+Made for Vercel. Set the production domain in `src/content/site.ts` (`url`) first: canonical URLs, the
+sitemap and the share tags all read from it.
