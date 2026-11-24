@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { onIntroRevealed } from "@/lib/intro";
+import { setSmoothScroller } from "@/lib/scroll";
 
 /**
  * One motion layer for the whole site, on one clock (GSAP's ticker):
@@ -25,6 +26,7 @@ export function MotionField() {
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       const lenis = new Lenis({ anchors: true, lerp: 0.11, wheelMultiplier: 0.95 });
       lenis.on("scroll", ScrollTrigger.update);
+      setSmoothScroller(lenis);
       const raf = (time: number) => lenis.raf(time * 1000);
       gsap.ticker.add(raf);
       gsap.ticker.lagSmoothing(0);
@@ -93,6 +95,7 @@ export function MotionField() {
         untilt();
         stopWaiting();
         gsap.ticker.remove(raf);
+        setSmoothScroller(null);
         lenis.destroy();
       };
     });
